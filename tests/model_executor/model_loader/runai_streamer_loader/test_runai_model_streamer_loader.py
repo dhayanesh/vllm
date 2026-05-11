@@ -41,7 +41,6 @@ def test_runai_model_loader_selects_mistral_consolidated_weights(
     model_loader = get_runai_model_loader()
     model_dir = tmp_path / "mistral"
     model_dir.mkdir()
-    (model_dir / "params.json").touch()
     weight_files = [
         str(model_dir / "consolidated.safetensors"),
         str(model_dir / "model-00001-of-00002.safetensors"),
@@ -73,7 +72,6 @@ def test_runai_model_loader_selects_mistral_consolidated_object_weights(
     model_loader = get_runai_model_loader()
     model_dir = tmp_path / "mistral"
     model_dir.mkdir()
-    (model_dir / "params.json").touch()
     object_uri = "s3://bucket/mistral"
     weight_files = [
         f"{object_uri}/consolidated.safetensors",
@@ -90,7 +88,7 @@ def test_runai_model_loader_selects_mistral_consolidated_object_weights(
         model=str(model_dir),
         model_weights=object_uri,
         revision=None,
-        config_format="auto",
+        config_format="hf",
     )
 
     assert model_loader._prepare_weights(object_uri, model_config) == [
@@ -98,7 +96,7 @@ def test_runai_model_loader_selects_mistral_consolidated_object_weights(
     ]
 
 
-def test_runai_model_loader_keeps_object_weights_without_mistral_config(
+def test_runai_model_loader_keeps_object_weights_without_mistral_weights(
     tmp_path, monkeypatch: pytest.MonkeyPatch
 ):
     model_loader = get_runai_model_loader()
@@ -106,7 +104,6 @@ def test_runai_model_loader_keeps_object_weights_without_mistral_config(
     model_dir.mkdir()
     object_uri = "s3://bucket/hf"
     weight_files = [
-        f"{object_uri}/consolidated.safetensors",
         f"{object_uri}/model-00001-of-00002.safetensors",
         f"{object_uri}/model-00002-of-00002.safetensors",
     ]
@@ -120,7 +117,7 @@ def test_runai_model_loader_keeps_object_weights_without_mistral_config(
         model=str(model_dir),
         model_weights=object_uri,
         revision=None,
-        config_format="auto",
+        config_format="hf",
     )
 
     assert model_loader._prepare_weights(object_uri, model_config) == weight_files

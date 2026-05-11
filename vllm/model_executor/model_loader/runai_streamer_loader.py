@@ -17,13 +17,9 @@ from vllm.model_executor.model_loader.weight_utils import (
     filter_duplicate_safetensors_files,
     runai_safetensors_weights_iterator,
 )
-from vllm.transformers_utils.repo_utils import (
-    file_or_path_exists,
-    is_mistral_model_repo,
-)
+from vllm.transformers_utils.repo_utils import is_mistral_model_repo
 from vllm.transformers_utils.runai_utils import is_runai_obj_uri, list_safetensors
 
-MISTRAL_CONFIG_NAME = "params.json"
 MISTRAL_SAFETENSORS_PATTERN = "consolidated*.safetensors"
 MISTRAL_SAFETENSORS_INDEX_NAME = "consolidated.safetensors.index.json"
 
@@ -68,25 +64,14 @@ class RunaiModelStreamerLoader(BaseModelLoader):
     ) -> bool:
         if model_config.config_format == "mistral":
             return True
-        if model_config.config_format != "auto":
-            return False
 
         if is_runai_obj_uri(model_name_or_path):
-            # Object storage can point directly at weights while the model
-            # config is local/HF metadata. Use both sides to avoid treating an
-            # unrelated consolidated file as a Mistral checkpoint.
             if safetensors_files is None:
                 safetensors_files = list_safetensors(path=model_name_or_path)
-            has_mistral_config = file_or_path_exists(
-                model_config.model,
-                MISTRAL_CONFIG_NAME,
-                revision=model_config.revision,
-            )
-            has_mistral_weights = any(
+            return any(
                 self._matches_any_pattern(weight_file, [MISTRAL_SAFETENSORS_PATTERN])
                 for weight_file in safetensors_files
             )
-            return has_mistral_config and has_mistral_weights
 
         return is_mistral_model_repo(
             model_name_or_path,
